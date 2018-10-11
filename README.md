@@ -6,9 +6,9 @@ chapter 1 소스 참고
 ## 2.1 동기와 비동기
 <img src="https://user-images.githubusercontent.com/6028071/46670102-383d1080-cc0c-11e8-9a6a-bf8ecda691ec.png" alt="image" width="50%">
 
-<a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46670102-383d1080-cc0c-11e8-9a6a-bf8ecda691ec.png"><img src="https://user-images.githubusercontent.com/6028071/46670102-383d1080-cc0c-11e8-9a6a-bf8ecda691ec.png" alt="image" style="max-width:50%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46670102-383d1080-cc0c-11e8-9a6a-bf8ecda691ec.png"><img src="https://user-images.githubusercontent.com/6028071/46670102-383d1080-cc0c-11e8-9a6a-bf8ecda691ec.png" alt="image" width="50%"></a>
 
-<a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46670217-8e11b880-cc0c-11e8-8f9d-fff897e193cf.png"><img src="https://user-images.githubusercontent.com/6028071/46670217-8e11b880-cc0c-11e8-8f9d-fff897e193cf.png" alt="image" style="max-width:50%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46670217-8e11b880-cc0c-11e8-8f9d-fff897e193cf.png"><img src="https://user-images.githubusercontent.com/6028071/46670217-8e11b880-cc0c-11e8-8f9d-fff897e193cf.png" alt="image" width="50%"></a>
 
 ### 2.1.1 정의
 ## 2.2 블로킹과 논블로킹
@@ -55,7 +55,7 @@ JDK 1.4 부터 NIO라는 논블로킹 I/O API가 추가되었다. 입출력과 �
     }
 ```
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46670269-a84b9680-cc0c-11e8-8283-cf54726e9941.png"><img src="https://user-images.githubusercontent.com/6028071/46670269-a84b9680-cc0c-11e8-8283-cf54726e9941.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46670269-a84b9680-cc0c-11e8-8283-cf54726e9941.png"><img src="https://user-images.githubusercontent.com/6028071/46670269-a84b9680-cc0c-11e8-8283-cf54726e9941.png" alt="image" width="50%"></a></p>
 
 메소드 별로 블로킹 되는 위치를 표시 한다.
 
@@ -92,7 +92,7 @@ JDK 1.4 부터 NIO라는 논블로킹 I/O API가 추가되었다. 입출력과 �
 
 블로킹 소켓과 논블로킹 방식의 가장 큰 차이점은 I/O 처리 방법에 있다. 두 동작 방식을 아래의 그림에서 확인할 수 있다.
 
-<a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46704272-39e6f280-cc65-11e8-8786-166e4170c3b9.png"><img src="https://user-images.githubusercontent.com/6028071/46704272-39e6f280-cc65-11e8-8786-166e4170c3b9.png" alt="image" style="max-width:50%;"></a>
+<a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46704272-39e6f280-cc65-11e8-8786-166e4170c3b9.png"><img src="https://user-images.githubusercontent.com/6028071/46704272-39e6f280-cc65-11e8-8786-166e4170c3b9.png" alt="image" width="50%"></a>
 
 ## 2.3 이벤트 기반 프로그래밍
 
@@ -105,7 +105,7 @@ JDK 1.4 부터 NIO라는 논블로킹 I/O API가 추가되었다. 입출력과 �
 
 네트워크 프로그램에서 클라이언트와 서버가 어떻게 데이터를 통신하는지 [그림 2-7] 에서 살펴보자.
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46704279-44a18780-cc65-11e8-9db9-a6e1109acb92.png"><img src="https://user-images.githubusercontent.com/6028071/46704279-44a18780-cc65-11e8-9db9-a6e1109acb92.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46704279-44a18780-cc65-11e8-9db9-a6e1109acb92.png"><img src="https://user-images.githubusercontent.com/6028071/46704279-44a18780-cc65-11e8-9db9-a6e1109acb92.png" alt="image" width="50%"></a></p>
 
 1. 서버는 클라이언트의 연결을 수락하기 위해서 서버 소켓을 생성하고 포트를 서버 소켓에 바인딩 한다.
 2. 클라이언트의 연결을 수락하고 클라이언트의 데이터를 송수신할 소켓을 생성
@@ -124,7 +124,7 @@ JDK 1.4 부터 NIO라는 논블로킹 I/O API가 추가되었다. 입출력과 �
 [그림 2-9] 는 네티가 소켓을 통해서 데이터를 송수신하는 방법을 표현하고 있다. 
 [그림 2-8] 과 같이 데이터를 소켓으로 전송하기 위해서 채널에 직접 기록하는 것이 아니라 데이터 핸들러를 통해서 기록한다.
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46704285-4d925900-cc65-11e8-8a36-738536385f47.png"><img src="https://user-images.githubusercontent.com/6028071/46704285-4d925900-cc65-11e8-8a36-738536385f47.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46704285-4d925900-cc65-11e8-8a36-738536385f47.png"><img src="https://user-images.githubusercontent.com/6028071/46704285-4d925900-cc65-11e8-8a36-738536385f47.png" alt="image" width="50%"></a></p>
 
 이벤트 기반 코드의 장점
 - 서버 애플리케이션의 코드를 클라이언트 애플리케이션에서 재사용
@@ -143,7 +143,7 @@ JDK 1.4 부터 NIO라는 논블로킹 I/O API가 추가되었다. 입출력과 �
 부트스트랩은 네티로 작성한 네트워크 애플리네이션의 동작 방식과 환경을 설정하는 도우미 클래스.
 
 ## 3.2 부트스트랩의 구조
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46806947-d31c2300-cda3-11e8-9099-1495e3c9a612.png"><img src="https://user-images.githubusercontent.com/6028071/46806947-d31c2300-cda3-11e8-9099-1495e3c9a612.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46806947-d31c2300-cda3-11e8-9099-1495e3c9a612.png"><img src="https://user-images.githubusercontent.com/6028071/46806947-d31c2300-cda3-11e8-9099-1495e3c9a612.png" alt="image" width="50%"></a></p>
 
 [그림 3-1]은 부트스트랩이 지원하는 설정 목록을 보여주는데, 실제로 부트스트랩은 네트워크 애플리케이션 설정에 필요한 모든 내용을 담고 있다.
 
@@ -233,21 +233,21 @@ UDT 프로토콜을 지원하는 블로킹 모드의 서버 소켓 채널을 생
 내부적으로 데이터그램 패킷을 처리하도록 구현되어 있다.
 위에 나열된 클래스의 설명에 서버 소켓 채널을 생성하는 클래스들은 모두 io.netty.channel 패키지의 ServerChannel 인터페이스를 구현하고 있다.
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png"><img src="https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png"><img src="https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png" alt="image" width="50%"></a></p>
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807027-052d8500-cda4-11e8-9285-606cac781185.png"><img src="https://user-images.githubusercontent.com/6028071/46807027-052d8500-cda4-11e8-9285-606cac781185.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807027-052d8500-cda4-11e8-9285-606cac781185.png"><img src="https://user-images.githubusercontent.com/6028071/46807027-052d8500-cda4-11e8-9285-606cac781185.png" alt="image" width="50%"></a></p>
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807047-0f4f8380-cda4-11e8-997d-172ee0c78db5.png"><img src="https://user-images.githubusercontent.com/6028071/46807047-0f4f8380-cda4-11e8-997d-172ee0c78db5.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807047-0f4f8380-cda4-11e8-997d-172ee0c78db5.png"><img src="https://user-images.githubusercontent.com/6028071/46807047-0f4f8380-cda4-11e8-997d-172ee0c78db5.png" alt="image" width="50%"></a></p>
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807067-1b3b4580-cda4-11e8-8b57-7201e6cd8604.png"><img src="https://user-images.githubusercontent.com/6028071/46807067-1b3b4580-cda4-11e8-8b57-7201e6cd8604.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807067-1b3b4580-cda4-11e8-8b57-7201e6cd8604.png"><img src="https://user-images.githubusercontent.com/6028071/46807067-1b3b4580-cda4-11e8-8b57-7201e6cd8604.png" alt="image" width="50%"></a></p>
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807087-22faea00-cda4-11e8-9a95-ee673e6a2f9b.png"><img src="https://user-images.githubusercontent.com/6028071/46807087-22faea00-cda4-11e8-9a95-ee673e6a2f9b.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807087-22faea00-cda4-11e8-9a95-ee673e6a2f9b.png"><img src="https://user-images.githubusercontent.com/6028071/46807087-22faea00-cda4-11e8-9a95-ee673e6a2f9b.png" alt="image" width="50%"></a></p>
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807124-31490600-cda4-11e8-8f42-b15f18ae22c9.png"><img src="https://user-images.githubusercontent.com/6028071/46807124-31490600-cda4-11e8-8f42-b15f18ae22c9.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807124-31490600-cda4-11e8-8f42-b15f18ae22c9.png"><img src="https://user-images.githubusercontent.com/6028071/46807124-31490600-cda4-11e8-8f42-b15f18ae22c9.png" alt="image" width="50%"></a></p>
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807138-3ad26e00-cda4-11e8-9ce3-2f06bda27888.png"><img src="https://user-images.githubusercontent.com/6028071/46807138-3ad26e00-cda4-11e8-9ce3-2f06bda27888.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807138-3ad26e00-cda4-11e8-9ce3-2f06bda27888.png"><img src="https://user-images.githubusercontent.com/6028071/46807138-3ad26e00-cda4-11e8-9ce3-2f06bda27888.png" alt="image" width="50%"></a></p>
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807209-5b9ac380-cda4-11e8-830c-58209d6ae108.png"><img src="https://user-images.githubusercontent.com/6028071/46807209-5b9ac380-cda4-11e8-830c-58209d6ae108.png" alt="image" style="max-width:50%;"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807209-5b9ac380-cda4-11e8-830c-58209d6ae108.png"><img src="https://user-images.githubusercontent.com/6028071/46807209-5b9ac380-cda4-11e8-830c-58209d6ae108.png" alt="image" width="50%"></a></p>
 
 ![image](https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png)
 
