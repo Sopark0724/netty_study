@@ -4,7 +4,7 @@ chapter 1 소스 참고
 # 2장 네티의 주요 특징
 
 ## 2.1 동기와 비동기
-<img src="https://user-images.githubusercontent.com/6028071/46670102-383d1080-cc0c-11e8-9a6a-bf8ecda691ec.png" alt="image" style="width:50%;">
+<img src="https://user-images.githubusercontent.com/6028071/46670102-383d1080-cc0c-11e8-9a6a-bf8ecda691ec.png" alt="image" width="50%">
 
 <a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46670102-383d1080-cc0c-11e8-9a6a-bf8ecda691ec.png"><img src="https://user-images.githubusercontent.com/6028071/46670102-383d1080-cc0c-11e8-9a6a-bf8ecda691ec.png" alt="image" style="max-width:50%;"></a>
 
