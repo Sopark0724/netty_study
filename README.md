@@ -233,41 +233,194 @@ UDT 프로토콜을 지원하는 블로킹 모드의 서버 소켓 채널을 생
 내부적으로 데이터그램 패킷을 처리하도록 구현되어 있다.
 위에 나열된 클래스의 설명에 서버 소켓 채널을 생성하는 클래스들은 모두 io.netty.channel 패키지의 ServerChannel 인터페이스를 구현하고 있다.
 
+#### channelFactory - 소켓 입출력 모드 설정
+
+channelFactory 메서드는 channel 메서드와 동일하게 소켓의 입출력 모드를 설정하는 API 다. channel 메소드와 동일한 기능을 수행.
+
+#### handler - 서버 소켓 채널의 이벤트 핸들러 설정
+
+```java
+    public class EchoServerV2 {
+        public static void main(String[] args) throws Exception {
+            EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            try {
+                ServerBootstrap b = new ServerBootstrap();
+                b.group(bossGroup, workerGroup)
+                 .channel(NioServerSocketChannel.class) 
+                 .handler(new LoggingHandler(LogLevel.DEBUG)) // 핸들러 등록
+                 .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    public void initChannel(SocketChannel ch) {
+                        ChannelPipeline p = ch.pipeline();
+                        p.addLast(new EchoServerHandler());
+                    }
+                });
+    
+                ChannelFuture f = b.bind(8888).sync();
+    
+                f.channel().closeFuture().sync();
+            }
+            ....
+        }
+    }
+```
+
+서버 소켓 채널의 이벤트를 처리할 핸들러 설정. 이 메서드를 통해서 등록되는 이벤트 핸들러는 서버 소켓 채널에서 발생하는 이벤트(이벤트 루프에 등록, 포트 바인드, 포트 활성화, 포트 접속등 정보)를 수신하여 처리. 
+LoggingHandler 는 연결된 클라이언트와 서버 간의 데이터 송수신 이벤트에 대한 로그는 출력하지 않고 *서버 소켓 채널에서 발생한 이벤트만을 처리*
+
+#### childHandler - 소켓 채널의 데이터 가공 핸들러 설정
+
+클라이언트 소켓 채널로 송수신되는 데이터를 가공하는 데이터 핸들러 설정. handler 메소드와 childHandler 메소드는 ChannelHandler 인터페이스를 구현한 클래스를 인수로 입력. 
+이 메소드를 통해서 등록되는 이벤트 핸들러는 서버에 연결된 클라이언트 소켓 채널에서 발생하는 이벤트를 수신하여 처리. 
+
+```java
+    public class EchoServerV3 {
+        public static void main(String[] args) throws Exception {
+            EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            try {
+                ServerBootstrap b = new ServerBootstrap();
+                b.group(bossGroup, workerGroup)
+                 .channel(NioServerSocketChannel.class)
+                 .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    public void initChannel(SocketChannel ch) {
+                        ChannelPipeline p = ch.pipeline();
+                        p.addLast(new LoggingHandler(LogLevel.DEBUG));     // pipeLine 을 통해 로그 출력
+                        p.addLast(new EchoServerHandler());
+                    }
+                });
+    
+                ChannelFuture f = b.bind(8888).sync();
+    
+                f.channel().closeFuture().sync();
+            }
+        }
+    }
+```
+
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807067-1b3b4580-cda4-11e8-8b57-7201e6cd8604.png"><img src="https://user-images.githubusercontent.com/6028071/46807067-1b3b4580-cda4-11e8-8b57-7201e6cd8604.png" alt="image" width="50%"></a></p>
+
+#### option - 서버 소켓 채널의 소켓 옵션 설정
+
+소켓 옵션 : 소켓의 동작 방식을 지정하는 것. 예를 들어 SO_SNDBUF 옵션은 소켓이 사용할 송신 버퍼의 크기를 지정. 
+소켓 옵션은 애플리케이션의 값을 바꾸는 것이 아니라 커널에서 사용되는 값을 변경한다는 의미.
+
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807087-22faea00-cda4-11e8-9a95-ee673e6a2f9b.png"><img src="https://user-images.githubusercontent.com/6028071/46807087-22faea00-cda4-11e8-9a95-ee673e6a2f9b.png" alt="image" width="50%"></a></p>
+
+SO_SNDBUF 옵션은 [그림 3-6]의 2에 표시된 송신버퍼의 크기를 지정하는데 사용.
+
+|옵션|설명|기본값|
+|--|--|--|
+|TCP_NODELAY|데이터 송수신에 Nagle 알고리즘의 비활성화 여부 지정|false|
+|SO_KEEPALIVE|운영체제에서 지정된 시간에 한번씩 keepalive 패킷을 상대방에게 전송|false|
+|SO_SNDBUF|상대방으로 송신할 커널 송신 버퍼의 크기|false|
+|SO_RCVBUF|상대방으로부터 수신할 커널 수신 버퍼의 크기|false|
+|SO_REUSEADDR|TIME_WAIT 상태의 포트를 서버 소켓에 바인드할 수 있게 한다|false|
+|SO_LINGER|소켓을 닫을 때 커널의 송신 버퍼에 전송되지 않은 데이터의 전송 대기시간을 지정한다	|false|
+|SO_BACKLOG|동시에 수용 가능한 소켓 연결 요청 수|-|
+
+- TCP_NODELAY
+    - TCP_NODELAY는 Nagle 알고리즘의 활성화 여부를 설정하는 값으로 기본값은 false
+    - Nagle 알고리즘 : '가능하면 데이터를 나누어 보내지 말고 한꺼번에 보내라' 라는 원칙을 기반으로 만들어진 아록리즘
+    - 데이터를 여러번에 나누어 전송하면 각 패킷에 불필요한 50바이트의 헤더 정보로 인한 오버헤드 발생하기 때문에 이를 방지하고자 데이터를 모아서 전송
+    - 특징
+        - 작은 크기의 데이터를 전송하면 커널의 송신 버퍼에서 적당한 크기로 모아서 보낸다.
+        - 이전에 보낸 패킷의 ACK 를 받아야 다음 패핏을 전송
+        - 빠른 응답시간이 필요한 네트워크 애플리케이션에서는 좋지 않은 결과를 가져온다.
+
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807138-3ad26e00-cda4-11e8-9ce3-2f06bda27888.png"><img src="https://user-images.githubusercontent.com/6028071/46807138-3ad26e00-cda4-11e8-9ce3-2f06bda27888.png" alt="image" width="50%"></a></p>
+
+- 소켓 종료 흐름
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807209-5b9ac380-cda4-11e8-830c-58209d6ae108.png"><img src="https://user-images.githubusercontent.com/6028071/46807209-5b9ac380-cda4-11e8-830c-58209d6ae108.png" alt="image" width="50%"></a></p>
+
+    1. 그림 1에서 소켓 종류 함수인 close 함수를 호출
+    2. 소켓 종료 함수가 호출되면 그림의 1과 같이 TCP 내부적으로 FIN 패킷을 상대방으로 전송
+    3. FIN 패킷을 수신한 상대방은 FIN 패킷을 정상적으로 수신했다는 신호를 ACK 패킷을 상대방에게 전송
+    4. 그림2와 같이 자신도 종료하겠다는 FIN 패킷을 상대방으로 전송
+    5. 상대방도 FIN 패킷을 정상적으로 수신했다는 ACK 패킷을 전송   
+
+- SO_REUSEADDR
+    - 위의 소켓 종료 흐름에서 그림3 에서 마지막 ACK 패킷을 전송한 피어의 소켓 상태가 일정 시간 동안 TIME_WAIT 으로 바뀌게 되는데, 이것은 자신이 전송한 ACK 패킷이 상대방으로 도달하기를 기다리는 시간
+    - 애플리케이션 서버가 강제 종료또는 비정상적인 종료로 인해 재시작하는 상황에서 사용하던 포트가 TIME_WITE에 있다면 애플리케이션 서버는 bind 함수가 실패하여 정상 동작하지 못한다. 이때 SO_REUSEADDR 옵션을 사용하면 해당 포트 상태가 TIME_WAIT더라도 사용할 수 있다.
+    
+- SO_BACKLOG
+    - 서버 소켓에 설정할 수 있는 옵션으로 동시에 수용할 클라이언트의 연결 요청 수
+    - 지정한 값이 서버 소켓이 사용할 수 있는 동시 연결수가 아니다.
+    - SO_BACKLOG 옵션은 SYN_RECEIVED 상태로 변경된 소켓 연결을 가지고 있는 큐의 크기를 설정하는 옵션
+    - 큐의 크기는 서버가 받아들일 수 있는 동시 연결 요청 수가 된다.
+    - 해당 값이 너무 크면 연결 대기 시간이 길어져 클라이언트에서 타임아웃이 발생하며 너무 작으면 클라이언트가 연결을 생성하지 못함.
+    
+``` java
+    public final class EchoServerWithOption {
+        public static void main(String[] args) throws Exception {
+            EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            try {
+                ServerBootstrap b = new ServerBootstrap();
+                b.group(bossGroup, workerGroup)
+                 .channel(NioServerSocketChannel.class)
+                 .option(ChannelOption.SO_BACKLOG, 1)   // 옵션 설정
+                 .childHandler(new ChannelInitializer<SocketChannel>() {
+                     @Override
+                     public void initChannel(SocketChannel ch) throws Exception {
+                         ChannelPipeline p = ch.pipeline();
+                         p.addLast(new EchoServerHandler());
+                     }
+                 });
+                 ....
+        }
+        ...
+    }
+```
+
+#### childOption - 소켓 채널의 소켓 옵션 설정
+
+option 메소드 : 서버 소켓 채널의 옵션을 설정
+
+childOption 메소드 :  서버에 접속한 클라이언트 소켓 채널에 대한 옵션을 설정
+
+대표적으로 SO_LINGER 옵션이 있다. 해당 옵션은 소켓 종료와 관련이 있다. 
+이 옵션을 켜면 close 메소드가 호출되었을 때 커널 버퍼의 데이터를 상대방으로 모두 전송하고 상대방 ACK 패킷을 기다린다.
+TIME_WAIT로 번환되는 것을 방지하기 위해서 SO_LINE 옵션을 활성화하고 타임아웃값을 0 ```.childOption(ChannelOption.SO_LINGER, 0)```으로 설정하는 편법도 사용.
+ 
+- 장점 : SO_LINGER 옵션은 TIME_WAIT 이 발생하지 않음
+- 단점 : 마지막으로 전송한 데이터가 클리이언트로 모두 전송되었는지 확인할 방법이 없음 
+
+
+### 3.3.2 Bootstrap API
+
+*클라이언트 애플리케이션 설정*
+
+#### group - 이벤트 루프 설정
+소켓 채널의 이벤트를 처리를 위한 이벤트 루프 객체를 하나 설정한다. 클라이언트 애플리케이션은 서버에 연결한 소켓 채널 하나만 가지고 있기 때문에 채널의 이벤트를 처리할 이벤트 루프도 하나다.
+
+#### channel - 소켓 입출력 모드 설정
+channel 메소드는 클라이언트 소켓 채널의 입출력 모드를 설정한다. 
+
+설정 가능한 클래스 목록
+- LocalChannel.class : 한 가상머신 안에서 가상 통신을 하고자 클라이언트 소켓 채널을 생성하는 클래스
+- OioSocketChannel.class : 블로킹 모드의 클라이언트 소켓 채널을 생성하는 클래스
+- NioSocketChannel.class : 논블로킹 모드의 클라이언트 소켓 채널을 생성하는 클래스
+- EpollSocketChannel.class : 리눅스 커널의 epoll 입출력 모드를 지원하는 클라이언트 소켓 채널을 생성하는 클래스
+- OioSctpChannel.class : SCTP 전송 계층을 사용하는 블로킹 모드의 클라이언트 소켓 채널을 생성하는 클래스
+- NioSctpChannel.class : SCTP 전송 계층을 사용하는 논블로킹 모드의 클라이언트 소켓 채널을 생성하는 클래스
+
+#### channelFactory - 소켓 입출력 모드 설정
+
+#### handler - 클라이언트 소켓 채널의 이벤트 핸들러 설정
+
+*클라이언트 소켓 채널에서 발생하는 이벤트를 수신하여 처리*
+
+#### option - 소켓 채널의 소켓 옵션 설정
+
+서버와 연결된 클라이언트 소켓 채널의 옵션을 설정.
+
+# 4장. 채널 파이프 라인과 코덱
+    
 <p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png"><img src="https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png" alt="image" width="50%"></a></p>
 
 <p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807027-052d8500-cda4-11e8-9285-606cac781185.png"><img src="https://user-images.githubusercontent.com/6028071/46807027-052d8500-cda4-11e8-9285-606cac781185.png" alt="image" width="50%"></a></p>
 
 <p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807047-0f4f8380-cda4-11e8-997d-172ee0c78db5.png"><img src="https://user-images.githubusercontent.com/6028071/46807047-0f4f8380-cda4-11e8-997d-172ee0c78db5.png" alt="image" width="50%"></a></p>
-
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807067-1b3b4580-cda4-11e8-8b57-7201e6cd8604.png"><img src="https://user-images.githubusercontent.com/6028071/46807067-1b3b4580-cda4-11e8-8b57-7201e6cd8604.png" alt="image" width="50%"></a></p>
-
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807087-22faea00-cda4-11e8-9a95-ee673e6a2f9b.png"><img src="https://user-images.githubusercontent.com/6028071/46807087-22faea00-cda4-11e8-9a95-ee673e6a2f9b.png" alt="image" width="50%"></a></p>
-
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807124-31490600-cda4-11e8-8f42-b15f18ae22c9.png"><img src="https://user-images.githubusercontent.com/6028071/46807124-31490600-cda4-11e8-8f42-b15f18ae22c9.png" alt="image" width="50%"></a></p>
-
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807138-3ad26e00-cda4-11e8-9ce3-2f06bda27888.png"><img src="https://user-images.githubusercontent.com/6028071/46807138-3ad26e00-cda4-11e8-9ce3-2f06bda27888.png" alt="image" width="50%"></a></p>
-
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807209-5b9ac380-cda4-11e8-830c-58209d6ae108.png"><img src="https://user-images.githubusercontent.com/6028071/46807209-5b9ac380-cda4-11e8-830c-58209d6ae108.png" alt="image" width="50%"></a></p>
-
-![image](https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png)
-
-![image](https://user-images.githubusercontent.com/6028071/46807027-052d8500-cda4-11e8-9285-606cac781185.png)
-
-![image](https://user-images.githubusercontent.com/6028071/46807047-0f4f8380-cda4-11e8-997d-172ee0c78db5.png)
-
-![image](https://user-images.githubusercontent.com/6028071/46807067-1b3b4580-cda4-11e8-8b57-7201e6cd8604.png)
-
-![image](https://user-images.githubusercontent.com/6028071/46807087-22faea00-cda4-11e8-9a95-ee673e6a2f9b.png)
-
-![image](https://user-images.githubusercontent.com/6028071/46807124-31490600-cda4-11e8-8f42-b15f18ae22c9.png)
-
-![image](https://user-images.githubusercontent.com/6028071/46807138-3ad26e00-cda4-11e8-9ce3-2f06bda27888.png)
-
-![image](https://user-images.githubusercontent.com/6028071/46807209-5b9ac380-cda4-11e8-830c-58209d6ae108.png)
-
-
-
-
-
-
-
