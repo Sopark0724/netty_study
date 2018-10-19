@@ -11,6 +11,7 @@ chapter 1 소스 참고
 <a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46670217-8e11b880-cc0c-11e8-8f9d-fff897e193cf.png"><img src="https://user-images.githubusercontent.com/6028071/46670217-8e11b880-cc0c-11e8-8f9d-fff897e193cf.png" alt="image" width="50%"></a>
 
 ### 2.1.1 정의
+
 ## 2.2 블로킹과 논블로킹
 - 블로킹 : 요청한 작업이 성공하거나 에러가 발생하기 전까지는 응답을 돌려주지 않음
 - 논블로킹 : 요청한 작업의 성공 여부와 상관없이 바로 결과를 돌려주는 것. 이때 요청의 응답값에 의해서 에러나 성공 여부를 판단한다.
@@ -198,11 +199,9 @@ ServerBootstrap 의 group 을 설정하는 부분은 2가지 지만 파라미터
 
 #### channel - 소켓 입출력 모드 설정
 
-channel = 입출력 모드를 설정
-
 channel 메소드는 AbstractBootstrap 추상 클래스의 구현체인 SeverBootstrap 과 Bootstrap 클래스에 모두 존재하는 API며 부트스트랩 클래스를 통해서 생성된 채널의 입출력 모드를 설정할 수 있다.
 
-●LocalServerChannel.class
+● LocalServerChannel.class
 하나의 자바 가상머신에서 가상 통신을 위한 서버 소켓 채널을 생성하는 클래스
 
 ※ 통상적으로 하나의 어플리케이션 내에서 클라이언트와 서버를 모두 구현하고 애플리케이션 안에서 소켓 통신을 수행할 때 사용한다.
@@ -418,9 +417,160 @@ channel 메소드는 클라이언트 소켓 채널의 입출력 모드를 설정
 서버와 연결된 클라이언트 소켓 채널의 옵션을 설정.
 
 # 4장. 채널 파이프 라인과 코덱
+
+- 채널 파이프라인 : 채널에서 발생한 이벤트가 이동하는 통로
+- 이벤트 핸들러 : 채널 파이프라인을 통해서 이동하느 ㄴ이벤트를 처리하는 클래스
+- 코덱 : 이벤트 핸들러를 상속받아서 구현한 구현체들 (io.netty.handler.codec 패치지에 자주사용하는 클래스 모여 있음)
+
+## 4.1 이벤트 실행
+
+## 4.2 채널 파이프라인
+
+### 4.2.1 채널 파이프라인 구조
+채널 파이프라인은 네티의 채널과 이벤트 핸들러 사이에서 연결 통로 역활을 수행한다.
+
+<네티의 흐름을 전기의 흐름에 비유>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47122003-f23d1800-d2af-11e8-85ad-362a7c7fbbf1.png"> <img src="https://user-images.githubusercontent.com/6028071/47122003-f23d1800-d2af-11e8-85ad-362a7c7fbbf1.png" alt="image" width="50%"></a></p>
+
+<전기흐름을 네티에 비유>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47122000-ebaea080-d2af-11e8-8b2b-1377ed19436b.png"> <img src="https://user-images.githubusercontent.com/6028071/47122000-ebaea080-d2af-11e8-8b2b-1377ed19436b.png" alt="image" width="50%"></a></p>
+
+1. 채널은 일반적으로 소켓 프로그래밍에서 말하는 소켓과 같다고 보면되는데 [그림 4-1]의 발전소에 대응된다. 
+2. 소켓에서 발생한 이벤트는 채널 파이프 라인을 따라 흐른다. 이부분은 전선과 멀티탭에 대응된다.
+3. 채널에서 발생한 이벤트들을 수신하고 처리하는 기능은 이벤트 핸들러가 수행하는데 이 부분은 가전제품에 대응된다. 
+   또한 멀티탭에 여러개의 가전제품을 연결하듯이 하나의 채널 파이프라인에 여러 이벤트 핸들러를 등록할 수 있다. 
+
+### 4.2.2 채널 파이프라인의 동작
+
+채널 파이프라인을 연결하는것을 전기 기기의 코드를 멀티탭에 꽃는 것에 비유할 수 있다.
+
+```java
+    public static void main(String[] args) throws InterruptedException {
+        ...
+
+        try {
+            ServerBootstrap b = new ServerBootstrap();
+
+            b.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {     // 1
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception { //2
+                            ChannelPipeline p = ch.pipeline();  // 3
+                            p.addLast(new EchoServerHandler()); // 4
+                        }
+                    });
+
+            ChannelFuture f = b.bind(8888).sync();
+
+            f.channel().closeFuture().sync();
+        } finally {
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+        }
+    }
+```
+
+- 1은 childHandler 메소드를 통해서 연결된 클라이언트 소켓 채널이 사용할 채널 파이프라인을 설정. 
+- 2의 initChannel 메소드는 클라이언트 소켓 채널이 생성될때 자동으로 호추로디는데 이때 채널 파이프라인의 수정을 수행한다.
+- 3에서는 initChannel 메소드의 인자로 입력된 소켓 채널(즉, 연결된 크라이언트 소켓 채널)에 설정된 채널 파이프라인을 가져오게 되는데,
+  네티의 내부에서는 클라이언트 소켓 채널을 생성할 때 빈 채널 파이프라인 객체를 생성하여 할당한다.
+- 이벤트 핸들러인 EchoSeverHandler를 채널 파이프라인에 등록하려면 4 와 같이 채널 파이프라인의 add 메소드를 사용한다.
+
+부트스트랩에 설정한 ChannelInitializer 클래스의 initChannel 메소드 본체는 부트스트랩이 초기화될 때 수행되며 이때 서버 소켓 채널과 채널 파이프라인이 연결된다.
+
+<채널 파이프라인이 초기화되는 순서>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121993-e3eefc00-d2af-11e8-81a1-299cf17fa9ee.png"> <img src="https://user-images.githubusercontent.com/6028071/47121993-e3eefc00-d2af-11e8-81a1-299cf17fa9ee.png" alt="image" width="50%"></a></p>
+
+각단계에서 수행하는 기능은 다음과 같다
+1. 클라이언트 연결에 대응하는 소켓 채널 객체를 생성하고 빈 채널 파이프라인 객체를 생성하여 소켓 채널에 할당한다.
+2. 소켓 채널에 등록된 ChannelInitializer 인터페이스의 구현체를 가져와서 initChannel 메소드를 호출한다.
+3. 소켓 채널 참조로부터 1에서 등록한 파이프라인 객체를 가져오고 채널 파이프라인에 입력된 이벤트 핸들러의 객체를 등록한다.
+
+## 4.3 이벤트 핸들러
+
+네티는 비동기 호출을 지원하는 두 가지 패턴을 제공한다.
+
+1. 퓨처 패턴
+2. 이벤트 핸들러 (리액터 패턴의 구현체)
+
+### 4.3.1 채널 인바운드 이벤트
+
+네티는 소켓 채널에서 발생하는 이벤트를 인바운드 이벤트와 아웃바운드 이벤트로 추상화 한다.
+
+- 인바운드 이벤트는 소켓 채널에서 발생한 이벤트 중에서 연결 상대방이 어떤 동작을 취했을 때 발생한다.
+
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121989-db96c100-d2af-11e8-8eb2-ff7e86014700.png"> <img src="https://user-images.githubusercontent.com/6028071/47121989-db96c100-d2af-11e8-8eb2-ff7e86014700.png" alt="image" width="50%"></a></p>
+
+네티는 인바운드 이벤트를 ChannelInboundHandler 인터페이스를 제공
+
+```java
+    public interface ChannelInboundHandler extends ChannelHandler {
     
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png"><img src="https://user-images.githubusercontent.com/6028071/46807012-fd6de080-cda3-11e8-9962-0b4742d2a679.png" alt="image" width="50%"></a></p>
+        /**
+         * The {@link Channel} of the {@link ChannelHandlerContext} was registered with its {@link EventLoop}
+         */
+        void channelRegistered(ChannelHandlerContext ctx) throws Exception;
+    
+        /**
+         * The {@link Channel} of the {@link ChannelHandlerContext} was unregistered from its {@link EventLoop}
+         */
+        void channelUnregistered(ChannelHandlerContext ctx) throws Exception;
+    
+        /**
+         * The {@link Channel} of the {@link ChannelHandlerContext} is now active
+         */
+        void channelActive(ChannelHandlerContext ctx) throws Exception;
+    
+        /**
+         * The {@link Channel} of the {@link ChannelHandlerContext} was registered is now inactive and reached its
+         * end of lifetime.
+         */
+        void channelInactive(ChannelHandlerContext ctx) throws Exception;
+    
+        /**
+         * Invoked when the current {@link Channel} has read a message from the peer.
+         */
+        void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception;
+    
+        /**
+         * Invoked when the last message read by the current read operation has been consumed by
+         * {@link #channelRead(ChannelHandlerContext, Object)}.  If {@link ChannelOption#AUTO_READ} is off, no further
+         * attempt to read an inbound data from the current {@link Channel} will be made until
+         * {@link ChannelHandlerContext#read()} is called.
+         */
+        void channelReadComplete(ChannelHandlerContext ctx) throws Exception;
+    
+        /**
+         * Gets called if an user event was triggered.
+         */
+        void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception;
+    
+        /**
+         * Gets called once the writable state of a {@link Channel} changed. You can check the state with
+         * {@link Channel#isWritable()}.
+         */
+        void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception;
+    
+        /**
+         * Gets called if a {@link Throwable} was thrown.
+         */
+        @Override
+        @SuppressWarnings("deprecated")
+        void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception;
+    }
+```
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807027-052d8500-cda4-11e8-9285-606cac781185.png"><img src="https://user-images.githubusercontent.com/6028071/46807027-052d8500-cda4-11e8-9285-606cac781185.png" alt="image" width="50%"></a></p>
 
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/46807047-0f4f8380-cda4-11e8-997d-172ee0c78db5.png"><img src="https://user-images.githubusercontent.com/6028071/46807047-0f4f8380-cda4-11e8-997d-172ee0c78db5.png" alt="image" width="50%"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121623-552daf80-d2ae-11e8-835f-ea47f924a8db.png"> <img src="https://user-images.githubusercontent.com/6028071/47121623-552daf80-d2ae-11e8-835f-ea47f924a8db.png" alt="image" width="50%"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121742-cc634380-d2ae-11e8-8378-c70439dc1c66.png"> <img src="https://user-images.githubusercontent.com/6028071/47121742-cc634380-d2ae-11e8-8378-c70439dc1c66.png" alt="image" width="50%"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121945-b4d88a80-d2af-11e8-8d86-edc5a3dc1e7e.png"> <img src="https://user-images.githubusercontent.com/6028071/47121945-b4d88a80-d2af-11e8-8d86-edc5a3dc1e7e.png" alt="image" width="50%"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121963-c02bb600-d2af-11e8-9873-5bd21670f731.png"> <img src="https://user-images.githubusercontent.com/6028071/47121963-c02bb600-d2af-11e8-9873-5bd21670f731.png" alt="image" width="50%"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121978-cd48a500-d2af-11e8-9713-b4c86b6fd904.png"> <img src="https://user-images.githubusercontent.com/6028071/47121978-cd48a500-d2af-11e8-9713-b4c86b6fd904.png" alt="image" width="50%"></a></p>
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121986-d46fb300-d2af-11e8-8050-cdaf9e2f8754.png"> <img src="https://user-images.githubusercontent.com/6028071/47121986-d46fb300-d2af-11e8-8050-cdaf9e2f8754.png" alt="image" width="50%"></a></p>
+
+
+
+
+
+
