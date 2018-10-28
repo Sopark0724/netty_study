@@ -561,13 +561,143 @@ channel 메소드는 클라이언트 소켓 채널의 입출력 모드를 설정
     }
 ```
 
+각 메서드는 네티의 소켓 채널에서 인바운드 이벤트로 발생하는 이벤트에 대응된다.
+
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121986-d46fb300-d2af-11e8-8050-cdaf9e2f8754.png"> <img src="https://user-images.githubusercontent.com/6028071/47121986-d46fb300-d2af-11e8-8050-cdaf9e2f8754.png" alt="image" width="50%"></a></p>
+
+#### channelRegistered 이벤트
+- 채널이 이벤트루프에 등록되었을 때 발생
+- 이벤트 루프는 네티가 이벤트를 실행하는 스레드로서 부트 스트랩에 설정한 이벤트 루프다.
+
+<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121978-cd48a500-d2af-11e8-9713-b4c86b6fd904.png"> <img src="https://user-images.githubusercontent.com/6028071/47121978-cd48a500-d2af-11e8-9713-b4c86b6fd904.png" alt="image" width="50%"></a></p>
+
+- 이벤트 발생시점
+    - Server
+        - 1번과 같이 처음 서버 소켓 채널을 활성할 때
+        - 3번과 같이 새로운 클라이언트가 서버에 접속하여 클라이언트 소켓 채널이 생성될 때
+    - Client 
+        - 2번과 같이 서버 접속을 위한 connect 메소드를 수행할 때
+        
+#### channelActive 이벤트
+- channelActive 이벤트는 channelRegistered 이벤트 이후에 발생.
+- 채널이 생성되고 이벤트 루프에 등록된 이후에 네티 API를 사용하여 채널 입출력을 수행할 상태가 되었음을 알려주는 이벤트
+- channelActive 이벤트는 서버, 클라이언트가 상대방에 연결한 직후 한 번 수행할 작업을 처리하기에 적합
+- 이 이벤트를 사용하기 적합한 작업의 예
+    - 서버 애플리케이션에 연결된 클라이언트의 연결 개수를 셀 때
+    - 서버 애플리케이션에 연결된 클라이언트에게 최초 연결에 대한 메시지 전송할 때
+    - 클라이언트 애플리케이션이 연결된 서버에 최초 메시지를 전달할 때
+    - 클라이언트 애플리케이션에서 서버에 연결된 상태에 대한 작업이 필요할 때
+    
+#### channelRead 이벤트
+- 데이터가 수신되었음을 알려줌
+- 수신된 데이터는 네티의 ByteBuf 객체에 저장되어 있으며 이벤트 메서드의 두 번째 인자인 msg를 통해서 접근할 수 있음.
+
+```java
+
+public class EchoServerV1 {
+    public static void main(String[] args) throws Exception {
+        .....
+            b.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        public void initChannel(SocketChannel ch) {
+                            ChannelPipeline p = ch.pipeline();
+                            p.addLast(new EchoServerV1Handler());
+                        }
+                    });
+        .....
+    }
+}
+
+```
+
+```java
+    public class EchoServerV1Handler extends ChannelInboundHandlerAdapter {
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            ByteBuf readMessage = (ByteBuf) msg;  // 1
+            System.out.println("channelRead : " + readMessage.toString(Charset.defaultCharset()));
+            ctx.writeAndFlush(msg);
+            ctx.write(msg);
+        }
+    
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            cause.printStackTrace();
+            ctx.close();
+        }
+    }
+```
+
+- EchoServerV1Handler 이벤트 핸들러는 channelRead 이벤트 메서드를 재정의 했다. 즉 데이터 수신이 발생했을 때 수신한 데이터를 출력하고 그 데이터를 상대방에게 그대로 돌려주도록 구현되어 있다.
+- 데이터가 수신되었을때 파라미터인 msg 객체에 수신된 데이터가 담겨 있으며 이것을 EchoServerV1Handler 의 주석 1번과 같이 ByteBuf 인터페이스로 변환한다.
+- **네티 내부에서는 모든 데이터가 ByteBuf로 관리된다.**
+
+#### channelReadComplete 이벤트
+- channelReadComplete 이벤트는 데이터 수신이 완료되었음을 알려준다.
+- channelRead vs channelReadComplete
+    - 예) 클라이언트가 서버로 'A', 'B', 'C' 라는 데이터를 순차적으로 전송한다고 하자. 이때 서버에서는 channelRead 이벤트가 발생하는데 이때 msg 객체에 수신된 데이터가 'ABC' 라면 다음으로 발생하는 이벤트는 channelReadComplete 이다.
+    
+```java
+public class EchoServerV2 {
+    public static void main(String[] args) throws Exception {
+        .....
+            b.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        public void initChannel(SocketChannel ch) {
+                            ChannelPipeline p = ch.pipeline();
+                            p.addLast(new EchoServerV2Handler());
+                        }
+                    });
+        .....
+}
+```
+    
+```java
+public class EchoServerV2Handler extends ChannelInboundHandlerAdapter {
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        ByteBuf readMessage = (ByteBuf) msg;
+        System.out.println("channelRead : " + readMessage.toString(Charset.defaultCharset()));
+        ctx.write(msg);
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) {
+        System.out.println("channelReadComplete 발생");
+        ctx.flush(); // 1
+    }
+    
+    .....
+}
+
+```
+- flush 메소드는 네티의 채널 버퍼에 저장된 데이터를 상대방으로 즉시 전송하고 EchoSeverV2는 소켓 채널에서 더이상 읽어들일 데이터가 없을때 channelReadComplete 이벤트에서 데이터를 전송.
+
+#### channelInactive 이벤트
+- channelActive 이벤트와는 반대로 채널이 비활성화되었을 때 발생
+
+#### channelUnregistered 이벤트
+- channelRegistered 이벤트의 반대로 채널이 이벤트 루프에서 제거되었을 때 발생.
+
+### 4.3.2 아웃바운드 이벤트
+- 네티 사용자(프로그래머)가 요청한 동작에 해당하는 이벤트를 말하며 연결 요청, 데이터 전송, 소켓 닫기 등이 해당됨.
+- ChannelOutboundHandler 이벤트는 CHannelHandlerContext 객체를 인수로 받는다.
+- ChannelHandlerContext 객체
+    - ChannelHAnlderContext는 두가지 네티 객체에 대한 상호작용을 도와주는 인터페이스다.
+    - 첫번째는 채널에 대한 입출력 처리.
+    - 두번째는 채널 파이프라인에 대한 상호작용.
+    
 
 <p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121623-552daf80-d2ae-11e8-835f-ea47f924a8db.png"> <img src="https://user-images.githubusercontent.com/6028071/47121623-552daf80-d2ae-11e8-835f-ea47f924a8db.png" alt="image" width="50%"></a></p>
 <p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121742-cc634380-d2ae-11e8-8378-c70439dc1c66.png"> <img src="https://user-images.githubusercontent.com/6028071/47121742-cc634380-d2ae-11e8-8378-c70439dc1c66.png" alt="image" width="50%"></a></p>
 <p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121945-b4d88a80-d2af-11e8-8d86-edc5a3dc1e7e.png"> <img src="https://user-images.githubusercontent.com/6028071/47121945-b4d88a80-d2af-11e8-8d86-edc5a3dc1e7e.png" alt="image" width="50%"></a></p>
 <p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121963-c02bb600-d2af-11e8-9873-5bd21670f731.png"> <img src="https://user-images.githubusercontent.com/6028071/47121963-c02bb600-d2af-11e8-9873-5bd21670f731.png" alt="image" width="50%"></a></p>
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121978-cd48a500-d2af-11e8-9713-b4c86b6fd904.png"> <img src="https://user-images.githubusercontent.com/6028071/47121978-cd48a500-d2af-11e8-9713-b4c86b6fd904.png" alt="image" width="50%"></a></p>
-<p><a target="_blank" rel="noopener noreferrer" href="https://user-images.githubusercontent.com/6028071/47121986-d46fb300-d2af-11e8-8050-cdaf9e2f8754.png"> <img src="https://user-images.githubusercontent.com/6028071/47121986-d46fb300-d2af-11e8-8050-cdaf9e2f8754.png" alt="image" width="50%"></a></p>
+
+
 
 
 
